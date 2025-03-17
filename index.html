@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SentimentScope</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            line-height: 1.6;
+            color: #333;
+            background-color: #f9f9f9;
+            overflow-x: hidden;
+        }
+
+        /* Navbar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: linear-gradient(to right, #1a2a44, #2b3e66);
+            color: #fff;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center; /* Vertically align logo image and text */
+        }
+
+        .logo-img {
+            width: 50px;
+            height: 50px;
+            margin-right: 15px;
+            border-radius: 50%;
+            background-color: #d4af37;
+        }
+
+        .logo h1 {
+            font-size: 36px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            line-height: 50px; /* Match the height of logo-img for vertical centering */
+        }
+
+        .nav-links {
+            list-style: none;
+            display: flex;
+            align-items: center; /* Align nav links vertically with logo */
+        }
+
+        .nav-links li {
+            margin-left: 35px;
+        }
+
+        .nav-links a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #d4af37;
+        }
+
+        /* Hero Section */
+        .hero {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(135deg, #2b3e66, #4a6ca8);
+            color: #fff;
+            padding: 0 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(30deg);
+            animation: wave 10s infinite linear;
+        }
+
+        @keyframes wave {
+            0% { transform: translateX(-50%) rotate(30deg); }
+            100% { transform: translateX(50%) rotate(30deg); }
+        }
+
+        .hero-content h2 {
+            font-size: 50px;
+            margin-bottom: 25px;
+        }
+
+        .hero-content p {
+            font-size: 22px;
+            margin-bottom: 35px;
+        }
+
+        .sentiment-input {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .sentiment-input input {
+            padding: 14px;
+            width: 350px;
+            max-width: 100%;
+            border: none;
+            border-radius: 30px;
+            font-size: 16px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .sentiment-input button {
+            padding: 14px 30px;
+            background-color: #d4af37;
+            color: #1a2a44;
+            border: none;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .sentiment-input button:hover {
+            background-color: #b8962e;
+            transform: scale(1.05);
+        }
+
+        /* Loading Animation */
+        .loading {
+            margin-top: 25px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 8px solid rgba(255, 255, 255, 0.3);
+            border-top: 8px solid #d4af37;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            margin-top: 25px;
+            font-size: 20px;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 20px 30px;
+            border-radius: 15px;
+            display: none;
+        }
+
+        /* Scroll Animation Classes */
+        .animate-on-scroll {
+            opacity: 0;
+            transition: opacity 0.5s ease, transform 0.8s ease;
+        }
+
+        .animate-on-scroll.visible {
+            opacity: 1;
+        }
+
+        .fade-in-up {
+            transform: translateY(50px);
+        }
+
+        .fade-in-up.visible {
+            transform: translateY(0);
+        }
+
+        .slide-in-left {
+            transform: translateX(-50px);
+        }
+
+        .slide-in-left.visible {
+            transform: translateX(0);
+        }
+
+        .zoom-in {
+            transform: scale(0.8);
+        }
+
+        .zoom-in.visible {
+            transform: scale(1);
+        }
+
+        /* How It Works Section */
+        .how-it-works {
+            padding: 100px 40px;
+            text-align: center;
+            background-color: #fff;
+        }
+
+        .how-it-works h2 {
+            font-size: 40px;
+            margin-bottom: 50px;
+            color: #1a2a44;
+        }
+
+        .steps {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .step {
+            width: 300px;
+            padding: 30px;
+            background-color: #e8ecef;
+            border-radius: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .step:hover {
+            transform: translateY(-15px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .step h3 {
+            font-size: 26px;
+            margin-bottom: 15px;
+            color: #2b3e66;
+        }
+
+        .step p {
+            font-size: 16px;
+            color: #555;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 100px 40px;
+            text-align: center;
+            background-color: #f9f9f9;
+        }
+
+        .features h2 {
+            font-size: 40px;
+            margin-bottom: 50px;
+            color: #1a2a44;
+        }
+
+        .feature-cards {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .feature-card {
+            width: 300px;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 20px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-card h3 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #d4af37;
+        }
+
+        .feature-card p {
+            font-size: 16px;
+            color: #666;
+        }
+
+        /* Team Section */
+        .team {
+            padding: 100px 40px;
+            background-color: #e8ecef;
+            text-align: center;
+        }
+
+        .team h2 {
+            font-size: 40px;
+            margin-bottom: 50px;
+            color: #1a2a44;
+        }
+
+        .team-members {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .member {
+            width: 220px;
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center-align image and text */
+        }
+
+        .member-img {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            margin-bottom: 20px;
+            background-color: #bdc3c7;
+            transition: transform 0.3s ease;
+        }
+
+        .member-img:hover {
+            transform: scale(1.1);
+        }
+
+        .member h3 {
+            font-size: 24px;
+            color: #2b3e66;
+            margin-bottom: 5px; /* Reduce gap between name and role */
+        }
+
+        .member p {
+            color: #777;
+            font-size: 16px;
+        }
+
+        /* Get In Touch Section */
+        .get-in-touch {
+            padding: 100px 40px;
+            text-align: center;
+            background: linear-gradient(to right, #1a2a44, #2b3e66);
+            color: #fff;
+        }
+
+        .get-in-touch h2 {
+            font-size: 40px;
+            margin-bottom: 30px;
+        }
+
+        .get-in-touch p {
+            font-size: 18px;
+            margin-bottom: 40px;
+        }
+
+        .get-in-touch form {
+            display: flex;
+            flex-direction: column;
+            max-width: 600px;
+            margin: 0 auto;
+            gap: 20px;
+        }
+
+        .get-in-touch input, .get-in-touch textarea {
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .get-in-touch button {
+            padding: 15px;
+            background-color: #d4af37;
+            color: #1a2a44;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .get-in-touch button:hover {
+            background-color: #b8962e;
+            transform: scale(1.05);
+        }
+
+        /* Scroll to Top Button */
+        .scroll-top {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            width: 60px;
+            height: 60px;
+            background-color: #d4af37;
+            color: #1a2a44;
+            border: none;
+            border-radius: 50%;
+            font-size: 28px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .scroll-top:hover {
+            background-color: #b8962e;
+            transform: scale(1.1);
+        }
+
+        .scroll-top.bounce {
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-20px); }
+            60% { transform: translateY(-15px); }
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 30px;
+            background-color: #1a2a44;
+            color: #fff;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="logo">
+            <div class="logo-img"></div>
+            <h1>SentimentScope</h1>
+        </div>
+        <ul class="nav-links">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#how-it-works">How It Works?</a></li>
+            <li><a href="#login">Login & Signup</a></li>
+        </ul>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero animate-on-scroll fade-in-up">
+        <div class="hero-content">
+            <h2>Unveiling Public Sentiment</h2>
+            <p>Get real-time insights into what people think about any product, brand, or topic with cutting-edge analysis.</p>
+            <div class="sentiment-input">
+                <input type="text" id="sentiment-query" placeholder="Enter a product or topic (e.g., iPhone 14)">
+                <button onclick="checkSentiment()">Analyze Now</button>
+            </div>
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Analyzing Sentiment...</p>
+            </div>
+            <div id="result" class="result">
+                <p>No Sentiment Regarding This</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="how-it-works animate-on-scroll slide-in-left">
+        <h2>How It Works?</h2>
+        <div class="steps">
+            <div class="step animate-on-scroll slide-in-left">
+                <h3>Step 1: Input Your Query</h3>
+                <p>Enter the name of a product, brand, or topic you’re interested in, such as "Tesla Model 3" or "Airtel 5G."</p>
+            </div>
+            <div class="step animate-on-scroll slide-in-left">
+                <h3>Step 2: Data Collection</h3>
+                <p>We scour platforms like X, Instagram, and top Indian news sites (e.g., NDTV, Times of India) to gather public opinions.</p>
+            </div>
+            <div class="step animate-on-scroll slide-in-left">
+                <h3>Step 3: Sentiment Analysis</h3>
+                <p>Our advanced NLP algorithms classify feedback as positive, negative, or neutral, analyzing tone and context.</p>
+            </div>
+            <div class="step animate-on-scroll slide-in-left">
+                <h3>Step 4: Insightful Results</h3>
+                <p>Get a detailed report with sentiment percentages and key reasons (e.g., "costly," "great design") for actionable insights.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features animate-on-scroll fade-in-up">
+        <h2>Why Choose SentimentScope?</h2>
+        <div class="feature-cards">
+            <div class="feature-card animate-on-scroll zoom-in">
+                <h3>Real-Time Insights</h3>
+                <p>Access up-to-the-minute sentiment data from social media and news sources.</p>
+            </div>
+            <div class="feature-card animate-on-scroll zoom-in">
+                <h3>Multi-Platform Analysis</h3>
+                <p>Combines data from X, Instagram, and Indian news outlets for a comprehensive view.</p>
+            </div>
+            <div class="feature-card animate-on-scroll zoom-in">
+                <h3>Actionable Reports</h3>
+                <p>Delivers clear, concise results to help businesses make informed decisions.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Team Section -->
+    <section id="team" class="team animate-on-scroll slide-in-left">
+        <h2>Meet Our Team</h2>
+        <div class="team-members">
+            <div class="member animate-on-scroll zoom-in">
+                <div class="member-img"></div>
+                <h3>Madhav Gandhi</h3>
+                <p>Lead Developer</p>
+            </div>
+            <div class="member animate-on-scroll zoom-in">
+                <div class="member-img"></div>
+                <h3>Aditya Singh Bisht</h3>
+                <p>AI Engineer</p>
+            </div>
+            <div class="member animate-on-scroll zoom-in">
+                <div class="member-img"></div>
+                <h3>Manmeet Singh</h3>
+                <p>Data Scientist</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Get In Touch Section -->
+    <section id="get-in-touch" class="get-in-touch animate-on-scroll fade-in-up">
+        <h2>Get In Touch</h2>
+        <p>Have questions or need support? We’re here to assist you!</p>
+        <form class="animate-on-scroll fade-in-up">
+            <input type="text" placeholder="Your Name">
+            <input type="email" placeholder="Your Email">
+            <textarea placeholder="Your Message" rows="5"></textarea>
+            <button type="submit">Send Message</button>
+        </form>
+    </section>
+
+    <!-- Scroll to Top Button -->
+    <button class="scroll-top" onclick="scrollToTop()">↑</button>
+
+    <!-- Footer -->
+    <footer class="animate-on-scroll fade-in-up">
+        <p>© 2025 SentimentScope. All rights reserved.</p>
+    </footer>
+
+    <script>
+        function checkSentiment() {
+            const query = document.getElementById("sentiment-query").value;
+            const loading = document.getElementById("loading");
+            const result = document.getElementById("result");
+
+            if (query.trim() === "") {
+                alert("Please enter a product or topic!");
+                return;
+            }
+
+            loading.style.display = "flex";
+            result.style.display = "none";
+
+            setTimeout(() => {
+                loading.style.display = "none";
+                result.style.display = "block";
+                result.style.opacity = "0";
+                setTimeout(() => result.style.opacity = "1", 10);
+                result.innerHTML = "No Sentiment Regarding This";
+            }, 2000);
+        }
+
+        // Scroll to Top Functionality
+        const scrollTopBtn = document.querySelector('.scroll-top');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 400) {
+                scrollTopBtn.style.display = 'flex';
+                scrollTopBtn.classList.add('bounce');
+            } else {
+                scrollTopBtn.style.display = 'none';
+                scrollTopBtn.classList.remove('bounce');
+            }
+        });
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Scroll Animation Logic
+        const animateOnScrollElements = document.querySelectorAll('.animate-on-scroll');
+        
+        function checkVisibility() {
+            animateOnScrollElements.forEach(element => {
+                const rect = element.getBoundingClientRect();
+                const windowHeight = window.innerHeight;
+                if (rect.top <= windowHeight * 0.9) {
+                    element.classList.add('visible');
+                }
+            });
+        }
+
+        window.addEventListener('scroll', checkVisibility);
+        window.addEventListener('load', checkVisibility);
+    </script>
+</body>
+</html>
